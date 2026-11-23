@@ -3,24 +3,24 @@
 Listedeki her görevin yanında bir onay kutusu olsun. Kutu işaretlenince görev tamamlanmış sayılsın ve başlığının üstü çizilsin. İşaret kaldırılınca eski haline dönsün.
 
 ## İnsan önceki teslimi reddetti
-<img width="1728" height="1117" alt="Ekran Resmi 2026-11-23 15 23 40" src="https://github.com/user-attachments/assets/6004c902-f75b-4552-80d1-b3159c379744" />  Bu görüntü ne alaka
+<img width="1728" height="1117" alt="Ekran Resmi 2026-11-23 15 30 04" src="https://github.com/user-attachments/assets/ea2376c7-1865-4e0a-bd5b-1b63b8117c5a" />  Yanlış proje çalışıyor 8080 portunda.
 Bu ret notu görevin parçasıdır; kabul kriterleri ve testler bunu kapsamalıdır.
 
 ## Kabul kriterleri
-- [ ] Yorum: 'tamamlandı' durumu görevde `tamamlandi` (boolean) alanıdır; kalıcılık, silme, filtreleme kapsam dışıdır. `src/gorevler.js` yeni saf fonksiyon `tamamlanmaDegistir(liste, id)` dışa aktarır; verilen id'li görevin `tamamlandi` değerini tersine çevirip yeni liste döndürür. İnsanın ret notundaki ekran görüntüsü okunamadığı için (yalnız 'Bu görüntü ne alaka' yazıyor) en dar yorum seçildi: teslim yalnız onay kutusu ve üstü çizili başlıkla ilgili olmalı, ilgisiz çıktı içermemelidir.
-- [ ] `gorevEkle([], 'Süt al')` sonucu `[{ id: 1, baslik: 'Süt al', tamamlandi: false }]` olur.
-- [ ] `tamamlanmaDegistir(liste, id)` `tamamlandi: false` olan görevi `true` yapar; tamamlanmış görevde tekrar çağrılınca `false` olur ve iki çağrı sonunda görev ilk haline eşittir.
-- [ ] `tamamlanmaDegistir` yalnız verilen id'li görevi değiştirir; diğer görevlerin tüm alanları, listedeki sıra ile hedef görevin `id` ve `baslik` değerleri aynı kalır.
-- [ ] `tamamlanmaDegistir` girdi listesini ve görev nesnelerini değiştirmez (dondurulmuş girdiyle hata vermez, yeni liste döner); listede olmayan id ya da boş liste verilirse içeriği aynı liste döner ve hata fırlatmaz.
-- [ ] Arayüzde (`src/app.js`) her görev satırında tam bir `input type=checkbox` bulunur; başlangıçta işaretsizdir, `checked` değeri görevin `tamamlandi` değerini yansıtır; kutu tıklanınca yalnız o görev tamamlanır, diğer satırların kutuları değişmez.
-- [ ] Tamamlanmış görevin başlık öğesi üstü çizili görünür (`tamamlandi` sınıfı ve `index.html` içinde `text-decoration: line-through` kuralı); işaret kaldırılınca sınıf kalkar ve çizgi kaybolur; başlık `textContent` ile yazılır (`<b>x</b>` gibi bir başlık HTML olarak yorumlanmaz).
-- [ ] Ret notu kapsamı: görev satırı yalnız onay kutusu ve başlık metninden oluşur; bu görev kapsamında görsel, ek bileşen veya istenmeyen başka öğe eklenmez; `node --test tests/*.test.js` tüm testlerle geçer.
+- [ ] Yorum: Önceki ret notundaki ekran görüntüsü okunamadı; yalnız "Yanlış proje çalışıyor 8080 portunda" yazıyor. En dar yorum: 8080'de sunulan sayfa bu depodaki görev listesi olmalıdır; başka bir projenin sayfası olmamalıdır. Depo kökü doğrudan sunulduğunda `index.html` bu projenin sayfasını vermelidir. Kapsam dışı: sunucu, derleme adımı, bağımlılık, yeni özellik. Onay kutusu ve üstü çizili başlık davranışı (tamamlandı yorumu) aynen geçerlidir.
+- [ ] `index.html` içinde `<title>` değeri `Görev listesi`, `<h1>` metni `Görev listesi` olur; sayfada `ekle-formu`, `baslik`, `liste`, `bos` kimlikli öğeler bulunur ve `<script type="module" src="src/app.js">` ile `src/app.js` yüklenir (testte `index.html` okunarak doğrulanır).
+- [ ] `index.html` içindeki `script src` yolu depo köküne göre göreli (`src/app.js`) olur ve bu dosya diskte vardır. Mutlak yol ya da dış adres kullanılmaz, böylece kök hangi portta sunulursa sunulsun bu proje yüklenir.
+- [ ] `src/app.js` içinde `getElementById` ile aranan her kimlik (`ekle-formu`, `baslik`, `liste`, `bos`, `surum`) `index.html` içinde tanımlıdır; başka bir projenin sayfası bu kimlikleri sağlayamayacağı için yanlış sayfa testle yakalanır.
+- [ ] `README.md`, uygulamanın depo kökünden sunularak 8080 portunda açılacağını tek bir komutla anlatan kısa bir bölüm içerir. Komut ek bağımlılık gerektirmez (örn. `python3 -m http.server 8080`). Testte README içinde `8080` geçtiği doğrulanır.
+- [ ] `tamamlanmaDegistir(liste, id)` verilen id'li görevin `tamamlandi` değerini tersine çevirir. İki çağrı görevi ilk haline döndürür. Yalnız hedef görev değişir, girdi liste ve nesneler değişmez. Olmayan id ya da boş listede içeriği aynı liste döner ve hata fırlatmaz.
+- [ ] Arayüzde her görev satırı tam olarak bir `input type=checkbox` ve bir başlık `span`'ından oluşur. Kutu `tamamlandi` değerini yansıtır. Tıklanınca yalnız o görev değişir. Tamamlanmış görevin başlığında `tamamlandi` sınıfı bulunur, `index.html` bu sınıf için `text-decoration: line-through` kuralını içerir. İşaret kalkınca sınıf da kalkar.
+- [ ] `node --test tests/*.test.js` mevcut ve yeni testlerle birlikte hatasız geçer.
 
 ## Plan
-1. Önce mevcut durumu doğrula: `src/gorevler.js` (`gorevEkle` zaten `tamamlandi: false` veriyor, `tamamlanmaDegistir` var), `src/app.js` (onay kutusu ve `tamamlandi` sınıfı var), `index.html` (`li span.tamamlandi` çizgi kuralı var) ve testler. `node --test tests/*.test.js` çalıştır; eksik ya da kırık olan yoksa bu kodlara dokunma.
-2. Ret notunu çöz: ekran görüntüsü (Ekran Resmi 2026-11-23 15 23 40) okunamadı, yorumda yalnız 'Bu görüntü ne alaka' var. İnsana, görüntünün hangi ekranı gösterdiğini ve neyin ilgisiz bulunduğunu sor; yanıt gelene kadar en dar yorumu uygula: görev dışı hiçbir öğe/dosya teslime girmesin.
-3. `src/app.js` ve `index.html` içinde görev kapsamı dışı öğe var mı kontrol et (örn. teslimle gelen görsel, ek dosya, `Sürüm` altbilgisi). Görevle ilgisizse ve ret nedeni olarak doğrulanırsa kaldır; doğrulanmadıysa dokunma ve raporda belirt.
-4. `tests/arayuz.test.js` içine satırın yalnız bir checkbox ve bir başlık span'ından oluştuğunu doğrulayan test ekle (ret notu kapsamı); mevcut testleri koru.
-5. `README.md` görev biçimi satırının `{ id: number, baslik: string, tamamlandi: boolean }` olduğunu doğrula.
-6. `docs/gorevler/gorev-1.md` içindeki kriterleri bu listeyle güncelle.
-7. `node --test tests/*.test.js` ile tüm testlerin geçtiğini doğrula.
+1. Önce `node --test tests/*.test.js` çalıştır. `src/gorevler.js` (`gorevEkle`, `tamamlanmaDegistir`), `src/app.js` (onay kutusu, `tamamlandi` sınıfı) ve `index.html` (çizgi kuralı) zaten var. Kırık bir şey yoksa bu dosyaların mantığına dokunma.
+2. Ret notunu çöz: 8080'deki yanlış proje büyük olasılıkla bu depoyu değil başka bir dizini sunan bir süreçtir. Geliştirici 8080'i dinleyen süreci bulsun (örn. `lsof -i :8080`), eskisini durdursun ve sunucuyu bu deponun kökünden başlatsın. Bu bir ortam işidir, kod değişikliği değildir. Ekran görüntüsü okunamadığı için insana görüntüde ne gördüğünü kısaca sor.
+3. `README.md`: "Çalıştırma" bölümü ekle. Depo kökünde `python3 -m http.server 8080` çalıştırılır, `http://localhost:8080` açılır ve sayfa başlığı "Görev listesi" olmalıdır. Derleme gerekmediğini ve bağımlılık eklenmediğini yaz. `package.json` ve `src/` dosyalarına dokunma.
+4. `tests/arayuz.test.js` dosyasına, `readFileSync` ile `index.html` okuyan testler ekle. Testler `<title>` ve `<h1>` değerini, `script src="src/app.js"` göreli yolunu ve dosyanın varlığını (`existsSync`) doğrular. Ayrıca `app.js` içindeki `getElementById('...')` kimliklerini regex ile çıkarıp her birinin `index.html`'de `id="..."` olarak geçtiğini doğrular.
+5. `tests/arayuz.test.js` dosyasına `README.md` içinde `8080` geçtiğini kontrol eden bir test ekle. Mevcut testleri silme veya değiştirme.
+6. `docs/gorevler/gorev-1.md` dosyasındaki kriterleri ve planı bu listeyle güncelle.
+7. `node --test tests/*.test.js` çalıştır ve hepsinin geçtiğini doğrula. Teslimden önce tarayıcıda `http://localhost:8080` açıp bu projenin sayfasının geldiğini, kutunun işaretlenince başlığın çizildiğini kontrol et.
