@@ -18,6 +18,18 @@ açar ve sonucu kabul eder.
 - Kullanıcıdan gelen metin sayfaya `textContent` ile yazılır, `innerHTML` ile değil.
 - Bir görev şu biçimdedir: `{ id: number, baslik: string, tamamlandi: boolean }`. Yeni alanlar görevlerle eklenir.
 
+## Çalıştırma
+
+Depo kökünde şu komutu çalıştırın:
+
+```
+python3 -m http.server 8080
+```
+
+Ardından `http://localhost:8080` adresini açın; sayfa başlığı "Görev listesi" olmalıdır.
+Derleme gerekmez, bağımlılık eklenmez. 8080 portunu başka bir süreç tutuyorsa önce onu durdurun,
+yoksa başka bir projenin sayfası görünür.
+
 ## Testleri çalıştırma
 
 ```
