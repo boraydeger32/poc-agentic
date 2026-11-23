@@ -113,3 +113,41 @@ test('arayüz: app.js tamamlanmaDegistir fonksiyonunu içe aktarır', () => {
   const kaynak = readFileSync(new URL('../src/app.js', import.meta.url), 'utf8');
   assert.match(kaynak, /import\s*\{[^}]*tamamlanmaDegistir[^}]*\}\s*from/);
 });
+
+test('ret notu kapsamı: satır yalnız bir onay kutusu ve bir başlık span\'ından oluşur', () => {
+  assert.ok(satirlar().length >= 3);
+  for (const s of satirlar()) {
+    assert.equal(s.children.length, 2, 'satırda tam iki öğe olmalı');
+    assert.equal(s.children[0].tagName, 'INPUT');
+    assert.equal(s.children[0].type, 'checkbox');
+    assert.equal(s.children[1].tagName, 'SPAN');
+    assert.equal(s.children[1].children.length, 0, 'başlık içinde alt öğe olmamalı');
+    assert.equal(s._text, '', 'satırın kendi metni olmamalı');
+  }
+});
+
+test('ret notu kapsamı: satırlarda görsel ya da ilgisiz öğe yoktur', () => {
+  const yasak = satirlar().flatMap((s) => s.bul((o) => !['LI', 'INPUT', 'SPAN'].includes(o.tagName)));
+  assert.equal(yasak.length, 0);
+});
+
+test('ret notu kapsamı: boş ya da yalnız boşluk başlık satır eklemez', () => {
+  const once = satirlar().length;
+  gorevEkleUI('');
+  gorevEkleUI('   ');
+  assert.equal(satirlar().length, once);
+});
+
+test('ret notu kapsamı: index.html görsel (img) içermez', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /<img\b/i);
+});
+
+test('arayüz: aynı kutuya iki kez tıklamak görevi ilk haline döndürür', () => {
+  kutu(satirlar()[1]).tikla();
+  assert.equal(kutu(satirlar()[1]).checked, true);
+  assert.ok(ustuCizili(baslikOgesi(satirlar()[1])));
+  kutu(satirlar()[1]).tikla();
+  assert.equal(Boolean(kutu(satirlar()[1]).checked), false);
+  assert.ok(!ustuCizili(baslikOgesi(satirlar()[1])));
+});
