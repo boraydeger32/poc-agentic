@@ -16,7 +16,7 @@ açar ve sonucu kabul eder.
 - Dış bağımlılık yok. `npm install` gerekmez.
 - İş mantığı `src/gorevler.js` içinde durur ve testle ölçülür; arayüz koduna mantık gömülmez.
 - Kullanıcıdan gelen metin sayfaya `textContent` ile yazılır, `innerHTML` ile değil.
-- Bir görev şu biçimdedir: `{ id: number, baslik: string }`. Yeni alanlar görevlerle eklenir.
+- Bir görev şu biçimdedir: `{ id: number, baslik: string, tamamlandi: boolean }`. Yeni alanlar görevlerle eklenir.
 
 ## Testleri çalıştırma
 

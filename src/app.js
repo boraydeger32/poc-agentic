@@ -1,5 +1,5 @@
 // Arayüz. Mantık içermez: src/gorevler.js fonksiyonlarını çağırır ve sayfayı çizer.
-import { gorevEkle } from './gorevler.js';
+import { gorevEkle, tamamlanmaDegistir } from './gorevler.js';
 
 let gorevler = [];
 
@@ -12,9 +12,18 @@ function ciz() {
   listeEl.replaceChildren();
   for (const gorev of gorevler) {
     const satir = document.createElement('li');
+    const kutu = document.createElement('input');
+    kutu.setAttribute('type', 'checkbox');
+    kutu.checked = gorev.tamamlandi;
+    kutu.setAttribute('aria-label', `Tamamlandı: ${gorev.baslik}`);
+    kutu.addEventListener('change', () => {
+      gorevler = tamamlanmaDegistir(gorevler, gorev.id);
+      ciz();
+    });
     const metin = document.createElement('span');
     metin.textContent = gorev.baslik;
-    satir.append(metin);
+    metin.classList.toggle('tamamlandi', gorev.tamamlandi);
+    satir.append(kutu, metin);
     listeEl.append(satir);
   }
   bosEl.hidden = gorevler.length > 0;
