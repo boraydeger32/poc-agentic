@@ -96,11 +96,17 @@ export function urunleriSuz(urunler, { arama = '', kategori = '', sadeceKritik =
   });
 }
 
-export function hareketGecmisi(hareketler, urunId, { baslangic, bitis } = {}) {
+// guncelStok verilirse, hareketlerden önceki başlangıç stoğu (üründe ilk
+// kayıtla girilen) geriye doğru bulunur. Düzeltme varsa ondan sonrası zaten kesindir.
+export function hareketGecmisi(hareketler, urunId, { baslangic, bitis, guncelStok } = {}) {
   const sirali = hareketler
     .filter((h) => h.urunId === urunId)
     .sort((a, b) => a.tarih - b.tarih || a.id - b.id);
   let stok = 0;
+  if (typeof guncelStok === 'number' && !sirali.some((h) => h.tur === 'duzeltme')) {
+    const net = sirali.reduce((t, h) => t + (h.tur === 'giris' ? h.miktar : -h.miktar), 0);
+    stok = guncelStok - net;
+  }
   const hesapli = sirali.map((h) => {
     if (h.tur === 'giris') stok += h.miktar;
     else if (h.tur === 'cikis') stok -= h.miktar;

@@ -327,7 +327,7 @@ function gecmisPenceresi(id) {
   const urun = urunler.find((u) => u.id === id);
   if (!urun) return;
   pencereAc(`${urun.ad}: Hareket geçmişi`);
-  const kayitlar = hareketGecmisi(hareketler, id, {});
+  const kayitlar = hareketGecmisi(hareketler, id, { guncelStok: urun.stok });
   if (kayitlar.length === 0) {
     modalIcerikEl.append(yaz('p', 'Bu ürün için hareket yok.'));
   } else {
