@@ -276,6 +276,8 @@ function urunPenceresi(id) {
   pencereAc(mevcut ? 'Ürünü düzenle' : 'Yeni ürün');
   const v = mevcut || { ad: '', sku: '', kategori: '', birim: 'adet', stok: 0, minStok: 0, alisFiyati: 0, satisFiyati: 0 };
   const form = yaz('form');
+  form.noValidate = true;
+  form.setAttribute('novalidate', '');
   const girdiler = {
     ad: girdiYap('ad', 'text', v.ad),
     sku: girdiYap('sku', 'text', v.sku),
@@ -342,6 +344,8 @@ function hareketPenceresi(id, tur) {
   if (!urun) return;
   pencereAc(`${urun.ad}: ${tur === 'giris' ? 'Stok girişi' : 'Stok çıkışı'}`);
   const form = yaz('form');
+  form.noValidate = true;
+  form.setAttribute('novalidate', '');
   const miktar = girdiYap('miktar', 'number', '');
   const aciklama = girdiYap('aciklama', 'text', '');
   const bilgi = yaz('p', `${urun.ad} — mevcut stok: ${urun.stok} ${urun.birim}`, 'modal-bilgi');
