@@ -141,6 +141,16 @@ export function csvDosyaAdi(tarih = new Date()) {
   return `stok-${tarih.getFullYear()}-${iki(tarih.getMonth() + 1)}-${iki(tarih.getDate())}.csv`;
 }
 
+// GG.AA.YYYY SS:DD
+export function tarihBicimle(ts) {
+  const d = new Date(ts);
+  return `${iki(d.getDate())}.${iki(d.getMonth() + 1)}.${d.getFullYear()} ${iki(d.getHours())}:${iki(d.getMinutes())}`;
+}
+
+export function turEtiketi(tur) {
+  return { giris: 'Giriş', cikis: 'Çıkış', duzeltme: 'Düzeltme' }[tur] || String(tur);
+}
+
 export function ayniGunMu(a, b) {
   const x = new Date(a);
   const y = new Date(b);

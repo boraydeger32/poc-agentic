@@ -2,6 +2,7 @@
 import {
   urunEkle, urunGuncelle, hareketEkle, kritikStoklar, kritikMi, stokDegeri, urunleriSuz,
   hareketGecmisi, csvOlustur, paraBicimle, csvDosyaAdi, ayniGunMu, veriGecerliMi, BIRIMLER,
+  tarihBicimle, turEtiketi,
 } from './stok.js';
 import { ornekVeri } from './ornek.js';
 
@@ -24,11 +25,20 @@ const SUTUNLAR = [
   { anahtar: 'ad', etiket: 'Ad' },
   { anahtar: 'sku', etiket: 'SKU' },
   { anahtar: 'kategori', etiket: 'Kategori' },
-  { anahtar: 'stok', etiket: 'Stok' },
-  { anahtar: 'minStok', etiket: 'Min. stok' },
-  { anahtar: 'alisFiyati', etiket: 'Alış fiyatı' },
-  { anahtar: 'satisFiyati', etiket: 'Satış fiyatı' },
+  { anahtar: 'stok', etiket: 'Stok', sayi: true },
+  { anahtar: 'minStok', etiket: 'Min. stok', sayi: true },
+  { anahtar: 'alisFiyati', etiket: 'Alış fiyatı', sayi: true },
+  { anahtar: 'satisFiyati', etiket: 'Satış fiyatı', sayi: true },
 ];
+
+let bildirimZamanlayici = null;
+function bildirimGoster(metin) {
+  const el = document.getElementById('bildirim');
+  el.textContent = metin;
+  el.hidden = false;
+  clearTimeout(bildirimZamanlayici);
+  bildirimZamanlayici = setTimeout(() => { el.hidden = true; }, 3000);
+}
 
 function yaz(tag, metin, sinif) {
   const e = document.createElement(tag);
@@ -77,7 +87,9 @@ function kartlariCiz() {
   const simdi = Date.now();
   document.getElementById('ozet-urun').textContent = String(urunler.length);
   document.getElementById('ozet-deger').textContent = paraBicimle(stokDegeri(urunler).alis);
-  document.getElementById('ozet-kritik').textContent = String(kritikStoklar(urunler).length);
+  const kritikSayi = kritikStoklar(urunler).length;
+  document.getElementById('ozet-kritik').textContent = String(kritikSayi);
+  document.getElementById('kart-kritik').classList.toggle('vurgu', kritikSayi > 0);
   document.getElementById('ozet-hareket').textContent = String(hareketler.filter((h) => ayniGunMu(h.tarih, simdi)).length);
 }
 
@@ -99,15 +111,25 @@ function kategorileriCiz() {
 function basliklariCiz() {
   baslikEl.replaceChildren();
   for (const s of SUTUNLAR) {
-    const th = yaz('th', s.etiket);
-    th.className = 'siralanabilir';
-    if (siralama.anahtar === s.anahtar) th.textContent = `${s.etiket} ${siralama.ters ? '▼' : '▲'}`;
-    th.addEventListener('click', () => {
+    const th = yaz('th', undefined, s.sayi ? 'siralanabilir sayi' : 'siralanabilir');
+    th.setAttribute('scope', 'col');
+    const aktif = siralama.anahtar === s.anahtar;
+    th.setAttribute('aria-sort', aktif ? (siralama.ters ? 'descending' : 'ascending') : 'none');
+    const dugme = document.createElement('button');
+    dugme.textContent = aktif ? `${s.etiket} ${siralama.ters ? '▼' : '▲'}` : s.etiket;
+    dugme.type = 'button';
+    dugme.addEventListener('click', () => {
       siralama = siralama.anahtar === s.anahtar
         ? { anahtar: s.anahtar, ters: !siralama.ters }
         : { anahtar: s.anahtar, ters: false };
       ciz();
+      const yeni = baslikEl.children[SUTUNLAR.indexOf(s)];
+      if (yeni && yeni.firstChild && yeni.firstChild.focus) yeni.firstChild.focus();
     });
+    dugme.addEventListener('keydown', (olay) => {
+      if (olay.key === ' ' || olay.key === 'Enter') { olay.preventDefault(); dugme.click(); }
+    });
+    th.append(dugme);
     baslikEl.append(th);
   }
   baslikEl.append(yaz('th', 'İşlemler'));
@@ -125,8 +147,8 @@ function sirala(liste) {
 function satirCiz(u) {
   const tr = yaz('tr');
   if (kritikMi(u)) tr.classList.add('kritik');
-  const hucre = (etiket, metin) => {
-    const td = yaz('td', metin);
+  const hucre = (etiket, metin, sayiMi) => {
+    const td = yaz('td', metin, sayiMi ? 'sayi' : undefined);
     td.setAttribute('data-label', etiket);
     return td;
   };
@@ -136,23 +158,24 @@ function satirCiz(u) {
     adTd,
     hucre('SKU', u.sku),
     hucre('Kategori', u.kategori),
-    hucre('Stok', `${u.stok} ${u.birim}`),
-    hucre('Min. stok', String(u.minStok)),
-    hucre('Alış fiyatı', paraBicimle(u.alisFiyati)),
-    hucre('Satış fiyatı', paraBicimle(u.satisFiyati)),
+    hucre('Stok', `${u.stok} ${u.birim}`, true),
+    hucre('Min. stok', String(u.minStok), true),
+    hucre('Alış fiyatı', paraBicimle(u.alisFiyati), true),
+    hucre('Satış fiyatı', paraBicimle(u.satisFiyati), true),
   );
   const islem = yaz('td', undefined, 'islemler');
-  const dugme = (metin, fn) => {
-    const b = yaz('button', metin);
+  const dugme = (metin, sinif, fn) => {
+    const b = yaz('button', metin, `dugme dugme-kucuk ${sinif}`);
     b.type = 'button';
+    b.setAttribute('aria-label', `${u.ad}: ${metin}`);
     b.addEventListener('click', fn);
     return b;
   };
   islem.append(
-    dugme('Giriş', () => hareketPenceresi(u.id, 'giris')),
-    dugme('Çıkış', () => hareketPenceresi(u.id, 'cikis')),
-    dugme('Düzenle', () => urunPenceresi(u.id)),
-    dugme('Geçmiş', () => gecmisPenceresi(u.id)),
+    dugme('Giriş', 'dugme-giris', () => hareketPenceresi(u.id, 'giris')),
+    dugme('Çıkış', 'dugme-tehlike', () => hareketPenceresi(u.id, 'cikis')),
+    dugme('Düzenle', 'dugme-duzenle', () => urunPenceresi(u.id)),
+    dugme('Geçmiş', 'dugme-gecmis', () => gecmisPenceresi(u.id)),
   );
   tr.append(islem);
   return tr;
@@ -167,7 +190,14 @@ function ciz() {
   }));
   govdeEl.replaceChildren(...liste.map(satirCiz));
   document.getElementById('bos').hidden = liste.length > 0;
-  document.getElementById('ornek-veri').hidden = urunler.length > 0 || hareketler.length > 0;
+  const veriYok = urunler.length === 0 && hareketler.length === 0;
+  document.getElementById('ornek-veri').hidden = !veriYok;
+  if (liste.length === 0) {
+    document.getElementById('bos-baslik').textContent = urunler.length === 0 ? 'Henüz ürün yok' : 'Sonuç bulunamadı';
+    document.getElementById('bos-metin').textContent = urunler.length === 0
+      ? 'İlk ürününüzü ekleyin ya da örnek verilerle başlayın.'
+      : 'Aramanıza uygun ürün bulunamadı. Filtreleri değiştirmeyi deneyin.';
+  }
 }
 
 // ---- Pencereler ----
@@ -179,19 +209,41 @@ function pencereAc(baslik) {
   } else modalEl.setAttribute('open', '');
 }
 
+// İçerik eklendikten sonra çağrılır: ilk alana (yoksa ilk düğmeye) odak verir.
+function ilkAlanaOdak() {
+  const hedef = modalIcerikEl.querySelector('input, select, button');
+  if (hedef && typeof hedef.focus === 'function') hedef.focus();
+}
+
 function pencereKapat() {
   if (typeof modalEl.close === 'function') modalEl.close();
   else modalEl.removeAttribute('open');
 }
 
-function alan(etiket, girdi) {
+let alanSayaci = 0;
+function alan(etiket, girdi, zorunlu) {
+  alanSayaci += 1;
   const kap = yaz('div', undefined, 'alan');
   const l = yaz('label', etiket);
-  l.append(girdi);
+  girdi.id = `alan-${alanSayaci}`;
+  l.setAttribute('for', girdi.id);
+  if (zorunlu) {
+    girdi.required = true;
+    girdi.setAttribute('aria-required', 'true');
+    l.append(yaz('span', '*', 'zorunlu'));
+  }
   const hata = yaz('div', '', 'hata');
+  hata.id = `hata-${alanSayaci}`;
   hata.setAttribute('role', 'alert');
-  kap.append(l, hata);
-  return { kap, hata };
+  girdi.setAttribute('aria-describedby', hata.id);
+  kap.append(l, girdi, hata);
+  return { kap, hata, girdi };
+}
+
+function hataYaz(a, metin) {
+  a.hata.textContent = metin;
+  if (metin) a.girdi.setAttribute('aria-invalid', 'true');
+  else a.girdi.removeAttribute('aria-invalid');
 }
 
 function girdiYap(ad, tip, deger) {
@@ -224,6 +276,8 @@ function urunPenceresi(id) {
   pencereAc(mevcut ? 'Ürünü düzenle' : 'Yeni ürün');
   const v = mevcut || { ad: '', sku: '', kategori: '', birim: 'adet', stok: 0, minStok: 0, alisFiyati: 0, satisFiyati: 0 };
   const form = yaz('form');
+  form.noValidate = true;
+  form.setAttribute('novalidate', '');
   const girdiler = {
     ad: girdiYap('ad', 'text', v.ad),
     sku: girdiYap('sku', 'text', v.sku),
@@ -247,21 +301,21 @@ function urunPenceresi(id) {
   const hatalar = {};
   for (const k of Object.keys(girdiler)) {
     if (k === 'stok' && mevcut) continue; // mevcut ürünün stoğu hareketle değişir
-    const a = alan(etiketler[k], girdiler[k]);
-    hatalar[k] = a.hata;
+    const a = alan(etiketler[k], girdiler[k], k === 'ad' || k === 'sku');
+    hatalar[k] = a;
     form.append(a.kap);
   }
   const genel = yaz('div', '', 'hata');
-  const kaydetBtn = yaz('button', 'Kaydet');
+  const kaydetBtn = yaz('button', 'Kaydet', 'dugme dugme-birincil');
   kaydetBtn.type = 'submit';
-  const iptal = yaz('button', 'İptal');
+  const iptal = yaz('button', 'İptal', 'dugme dugme-ikincil');
   iptal.type = 'button';
   iptal.addEventListener('click', pencereKapat);
   form.append(genel, yaz('div', undefined, 'dugmeler'));
   form.lastChild.append(kaydetBtn, iptal);
   form.addEventListener('submit', (olay) => {
     olay.preventDefault();
-    for (const h of Object.values(hatalar)) h.textContent = '';
+    for (const h of Object.values(hatalar)) hataYaz(h, '');
     genel.textContent = '';
     const alanlar = {
       ad: girdiler.ad.value, sku: girdiler.sku.value, kategori: girdiler.kategori.value,
@@ -271,15 +325,18 @@ function urunPenceresi(id) {
     if (!mevcut) alanlar.stok = sayi(girdiler.stok);
     const sonuc = mevcut ? urunGuncelle(urunler, id, alanlar) : urunEkle(urunler, alanlar);
     if (sonuc.hata) {
-      (hatalar[hataAlani(sonuc.hata)] || genel).textContent = sonuc.hata;
+      const hedef = hatalar[hataAlani(sonuc.hata)];
+      if (hedef) { hataYaz(hedef, sonuc.hata); hedef.girdi.focus(); } else genel.textContent = sonuc.hata;
       return;
     }
     urunler = sonuc;
     kaydet();
     pencereKapat();
     ciz();
+    bildirimGoster(mevcut ? 'Ürün güncellendi.' : 'Ürün eklendi.');
   });
   modalIcerikEl.append(form);
+  ilkAlanaOdak();
 }
 
 function hareketPenceresi(id, tur) {
@@ -287,29 +344,32 @@ function hareketPenceresi(id, tur) {
   if (!urun) return;
   pencereAc(`${urun.ad}: ${tur === 'giris' ? 'Stok girişi' : 'Stok çıkışı'}`);
   const form = yaz('form');
+  form.noValidate = true;
+  form.setAttribute('novalidate', '');
   const miktar = girdiYap('miktar', 'number', '');
   const aciklama = girdiYap('aciklama', 'text', '');
-  const m = alan(`Miktar (${urun.birim}) — mevcut stok: ${urun.stok}`, miktar);
+  const bilgi = yaz('p', `${urun.ad} — mevcut stok: ${urun.stok} ${urun.birim}`, 'modal-bilgi');
+  const m = alan(`Miktar (${urun.birim})`, miktar, true);
   const a = alan('Açıklama', aciklama);
-  const kaydetBtn = yaz('button', 'Kaydet');
+  const kaydetBtn = yaz('button', 'Kaydet', 'dugme dugme-birincil');
   kaydetBtn.type = 'submit';
-  const iptal = yaz('button', 'İptal');
+  const iptal = yaz('button', 'İptal', 'dugme dugme-ikincil');
   iptal.type = 'button';
   iptal.addEventListener('click', pencereKapat);
   const dugmeler = yaz('div', undefined, 'dugmeler');
   dugmeler.append(kaydetBtn, iptal);
-  form.append(m.kap, a.kap, dugmeler);
+  form.append(bilgi, m.kap, a.kap, dugmeler);
   form.addEventListener('submit', (olay) => {
     olay.preventDefault();
-    m.hata.textContent = '';
+    hataYaz(m, '');
     const q = sayi(miktar);
     if (!(q > 0)) {
-      m.hata.textContent = 'Miktar sıfırdan büyük bir sayı olmalı.';
+      hataYaz(m, 'Miktar sıfırdan büyük bir sayı olmalı.');
       return;
     }
     const sonuc = hareketEkle(urunler, hareketler, { urunId: id, tur, miktar: q, aciklama: aciklama.value.trim() });
     if (sonuc.hata) {
-      m.hata.textContent = sonuc.hata === 'Stok yetersiz.' ? `Stok yetersiz: mevcut stok ${urun.stok} ${urun.birim}.` : sonuc.hata;
+      hataYaz(m, sonuc.hata === 'Stok yetersiz.' ? `Stok yetersiz: mevcut stok ${urun.stok} ${urun.birim}.` : sonuc.hata);
       return;
     }
     urunler = sonuc.urunler;
@@ -317,11 +377,11 @@ function hareketPenceresi(id, tur) {
     kaydet();
     pencereKapat();
     ciz();
+    bildirimGoster(tur === 'giris' ? 'Stok girişi kaydedildi.' : 'Stok çıkışı kaydedildi.');
   });
   modalIcerikEl.append(form);
+  ilkAlanaOdak();
 }
-
-const TUR_ETIKET = { giris: 'Giriş', cikis: 'Çıkış', duzeltme: 'Düzeltme' };
 
 function gecmisPenceresi(id) {
   const urun = urunler.find((u) => u.id === id);
@@ -338,8 +398,8 @@ function gecmisPenceresi(id) {
     for (const h of kayitlar) {
       const tr = yaz('tr');
       tr.append(
-        yaz('td', new Date(h.tarih).toLocaleString('tr-TR')),
-        yaz('td', TUR_ETIKET[h.tur] || h.tur),
+        yaz('td', tarihBicimle(h.tarih)),
+        yaz('td', turEtiketi(h.tur)),
         yaz('td', `${h.miktar} ${urun.birim}`),
         yaz('td', h.aciklama),
         yaz('td', `${h.sonrasiStok} ${urun.birim}`),
@@ -348,10 +408,13 @@ function gecmisPenceresi(id) {
     }
     modalIcerikEl.append(tablo);
   }
-  const kapat = yaz('button', 'Kapat');
+  const kapat = yaz('button', 'Kapat', 'dugme dugme-ikincil');
   kapat.type = 'button';
   kapat.addEventListener('click', pencereKapat);
-  modalIcerikEl.append(kapat);
+  const alt = yaz('div', undefined, 'dugmeler');
+  alt.append(kapat);
+  modalIcerikEl.append(alt);
+  kapat.focus();
 }
 
 // ---- Olaylar ----
@@ -359,6 +422,10 @@ aramaEl.addEventListener('input', ciz);
 kategoriEl.addEventListener('change', ciz);
 kritikEl.addEventListener('change', ciz);
 document.getElementById('yeni-urun').addEventListener('click', () => urunPenceresi(null));
+document.getElementById('modal-kapat').addEventListener('click', pencereKapat);
+// Esc, <dialog>'un yerleşik cancel/close davranışıyla pencereyi kapatır.
+// Dışarı (arka plana) tıklayınca da kapat.
+modalEl.addEventListener('click', (olay) => { if (olay.target === modalEl) pencereKapat(); });
 
 document.getElementById('ornek-veri').addEventListener('click', () => {
   const veri = ornekVeri();
@@ -367,6 +434,7 @@ document.getElementById('ornek-veri').addEventListener('click', () => {
   uyar('');
   kaydet();
   ciz();
+  bildirimGoster('Örnek veriler yüklendi.');
 });
 
 document.getElementById('csv-indir').addEventListener('click', () => {
@@ -379,6 +447,7 @@ document.getElementById('csv-indir').addEventListener('click', () => {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+  bildirimGoster('CSV dosyası indirildi.');
 });
 
 yukle();

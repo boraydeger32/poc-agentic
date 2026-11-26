@@ -5,64 +5,184 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stok takip</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 70rem; margin: 2rem auto; padding: 0 1rem; color: #1f2328; }
-    h1 { font-size: 1.5rem; }
-    button, input, select { padding: .45rem .7rem; font-size: 1rem; }
-    button { cursor: pointer; }
-    .kartlar { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-bottom: 1rem; }
-    .kart { border: 1px solid #d0d7de; border-radius: .5rem; padding: .75rem 1rem; }
-    .kart span { display: block; font-size: .85rem; color: #656d76; }
-    .kart strong { font-size: 1.4rem; }
-    .arac { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
-    .arac input[type=search] { flex: 1; min-width: 10rem; }
-    .arac label { display: flex; align-items: center; gap: .3rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #d0d7de; }
-    th.siralanabilir { cursor: pointer; user-select: none; }
-    tr.kritik { background: #ffe3e3; }
-    .rozet { background: #cf222e; color: #fff; border-radius: 1rem; padding: .1rem .5rem; font-size: .75rem; }
-    .islemler button { margin: .1rem; padding: .25rem .5rem; font-size: .85rem; }
-    #uyari { background: #fff8c5; border: 1px solid #d4a72c; padding: .6rem; border-radius: .4rem; margin-bottom: 1rem; }
-    #bos { color: #656d76; }
-    dialog { border: 1px solid #d0d7de; border-radius: .5rem; min-width: min(28rem, 90vw); }
-    .alan { margin-bottom: .6rem; }
-    .alan label { display: flex; flex-direction: column; gap: .2rem; }
-    .hata { color: #cf222e; font-size: .85rem; min-height: 1em; }
-    .dugmeler { display: flex; gap: .5rem; margin-top: .5rem; }
+    :root {
+      --renk-birincil: #1d4ed8;
+      --renk-birincil-koyu: #1e40af;
+      --renk-birincil-acik: #dbeafe;
+      --renk-tehlike: #b91c1c;
+      --renk-tehlike-acik: #fef2f2;
+      --renk-tehlike-kenar: #fecaca;
+      --renk-uyari: #b45309;
+      --renk-uyari-acik: #fffbeb;
+      --renk-uyari-kenar: #fcd34d;
+      --renk-basari: #15803d;
+      --renk-yuzey: #ffffff;
+      --renk-zemin: #f3f4f6;
+      --renk-kenar: #d1d5db;
+      --renk-metin: #111827;
+      --renk-soluk: #6b7280;
+      --bosluk-1: .25rem;
+      --bosluk-2: .5rem;
+      --bosluk-3: .75rem;
+      --bosluk-4: 1rem;
+      --bosluk-6: 1.5rem;
+      --yaricap-kucuk: .375rem;
+      --yaricap-orta: .625rem;
+      --yaricap-tam: 999px;
+      --golge-kucuk: 0 1px 2px rgba(17, 24, 39, .08);
+      --golge-orta: 0 4px 12px rgba(17, 24, 39, .12);
+      --golge-buyuk: 0 20px 40px rgba(17, 24, 39, .25);
+      --yazi: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--yazi); background: var(--renk-zemin); color: var(--renk-metin); line-height: 1.45; }
+    header { background: var(--renk-yuzey); border-bottom: 1px solid var(--renk-kenar); box-shadow: var(--golge-kucuk); }
+    .kap { max-width: 74rem; margin: 0 auto; padding: var(--bosluk-4); }
+    header .kap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bosluk-3); }
+    h1 { font-size: 1.4rem; margin: 0; }
+    h2 { font-size: 1.15rem; margin: 0; }
+    main.kap { display: flex; flex-direction: column; gap: var(--bosluk-4); padding-top: var(--bosluk-6); }
+    .ust-dugmeler { display: flex; gap: var(--bosluk-2); }
+
+    .dugme { font: inherit; font-size: .95rem; font-weight: 600; min-height: 2.5rem; padding: var(--bosluk-2) var(--bosluk-4); border-radius: var(--yaricap-kucuk); border: 1px solid transparent; cursor: pointer; transition: background-color .15s, border-color .15s, box-shadow .15s; }
+    .dugme-birincil, .dugme.birincil { background: var(--renk-birincil); color: #fff; }
+    .dugme-birincil:hover, .dugme.birincil:hover { background: var(--renk-birincil-koyu); }
+    .dugme-ikincil { background: var(--renk-yuzey); color: var(--renk-metin); border-color: var(--renk-kenar); }
+    .dugme-ikincil:hover { background: var(--renk-zemin); }
+    .dugme-tehlike, .dugme.tehlike { background: var(--renk-uyari-acik); color: var(--renk-uyari); border-color: var(--renk-uyari-kenar); }
+    .dugme-tehlike:hover, .dugme.tehlike:hover { background: #fef3c7; }
+    .dugme-kucuk { min-height: 2rem; padding: var(--bosluk-1) var(--bosluk-2); font-size: .8rem; }
+    .dugme-giris { color: var(--renk-basari); border-color: var(--renk-basari); background: var(--renk-yuzey); }
+    .dugme-giris:hover { background: #f0fdf4; }
+    .dugme-duzenle, .dugme-gecmis { background: var(--renk-yuzey); color: var(--renk-metin); border-color: var(--renk-kenar); }
+    .dugme-duzenle:hover, .dugme-gecmis:hover { background: var(--renk-zemin); }
+    .dugme-gecmis { color: var(--renk-birincil); }
+    button:disabled, input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--renk-birincil); outline-offset: 2px; }
+
+    input, select { font: inherit; min-height: 2.5rem; padding: var(--bosluk-2) var(--bosluk-3); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-kucuk); background: var(--renk-yuzey); color: var(--renk-metin); transition: border-color .15s, box-shadow .15s; }
+    input:hover, select:hover { border-color: var(--renk-soluk); }
+    input[aria-invalid="true"] { border-color: var(--renk-tehlike); background: var(--renk-tehlike-acik); }
+
+    .kartlar { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--bosluk-3); }
+    .kart { background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); box-shadow: var(--golge-kucuk); padding: var(--bosluk-3) var(--bosluk-4); }
+    .kart h2 { font-size: .8rem; font-weight: 600; color: var(--renk-soluk); text-transform: uppercase; letter-spacing: .03em; }
+    .kart strong { display: block; font-size: 1.6rem; margin-top: var(--bosluk-1); font-variant-numeric: tabular-nums; }
+    .kart.vurgu { background: var(--renk-tehlike-acik); border-color: var(--renk-tehlike-kenar); }
+    .kart.vurgu strong { color: var(--renk-tehlike); }
+
+    .arac { display: flex; flex-wrap: wrap; gap: var(--bosluk-3); align-items: center; background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); padding: var(--bosluk-3); }
+    .arac input[type=search] { flex: 1; min-width: 12rem; }
+    .arac .onay { display: flex; align-items: center; gap: var(--bosluk-2); cursor: pointer; }
+    .arac input[type=checkbox] { min-height: 0; width: 1.1rem; height: 1.1rem; }
+
+    .tablo-kap { background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); box-shadow: var(--golge-kucuk); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td { text-align: left; padding: var(--bosluk-3); border-bottom: 1px solid var(--renk-zemin); vertical-align: middle; }
+    thead th { position: sticky; top: 0; z-index: 1; background: #f9fafb; border-bottom: 1px solid var(--renk-kenar); font-size: .8rem; color: var(--renk-soluk); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+    thead th button { all: unset; cursor: pointer; font: inherit; text-transform: inherit; letter-spacing: inherit; }
+    thead th button:hover { color: var(--renk-birincil); }
+    thead th button:focus-visible { outline: 3px solid var(--renk-birincil); outline-offset: 2px; }
+    th.sayi, td.sayi { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr { transition: background-color .15s; }
+    tbody tr:hover { background: var(--renk-birincil-acik); }
+    tr.kritik { background: var(--renk-tehlike-acik); }
+    tr.kritik:hover { background: var(--renk-tehlike-kenar); }
+    .rozet { display: inline-block; background: var(--renk-tehlike); color: #fff; border-radius: var(--yaricap-tam); padding: 0 var(--bosluk-2); font-size: .7rem; font-weight: 700; margin-left: var(--bosluk-1); vertical-align: middle; }
+    .islemler { white-space: nowrap; }
+    .islemler .dugme + .dugme { margin-left: var(--bosluk-1); }
+
+    .bos-durum { text-align: center; padding: var(--bosluk-6) var(--bosluk-4); color: var(--renk-soluk); }
+    .bos-durum h2 { color: var(--renk-metin); margin-bottom: var(--bosluk-2); }
+    .bos-durum p { margin: 0 0 var(--bosluk-3); }
+
+    #uyari { background: var(--renk-uyari-acik); border: 1px solid var(--renk-uyari-kenar); color: var(--renk-uyari); padding: var(--bosluk-3) var(--bosluk-4); border-radius: var(--yaricap-kucuk); }
+    .toast { position: fixed; bottom: var(--bosluk-6); left: 50%; transform: translateX(-50%); background: var(--renk-metin); color: #fff; padding: var(--bosluk-3) var(--bosluk-4); border-radius: var(--yaricap-kucuk); box-shadow: var(--golge-orta); z-index: 100; animation: belir .2s ease-out; max-width: calc(100vw - 2rem); }
+    @keyframes belir { from { opacity: 0; transform: translate(-50%, .5rem); } to { opacity: 1; transform: translate(-50%, 0); } }
+    [hidden] { display: none !important; }
+
+    dialog { border: 0; border-radius: var(--yaricap-orta); box-shadow: var(--golge-buyuk); padding: 0; width: min(32rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); color: var(--renk-metin); }
+    dialog::backdrop { background: rgba(17, 24, 39, .5); }
+    .modal-ust { display: flex; align-items: center; justify-content: space-between; gap: var(--bosluk-3); padding: var(--bosluk-3) var(--bosluk-4); border-bottom: 1px solid var(--renk-kenar); }
+    .modal-kapat { font-size: 1.3rem; line-height: 1; padding: 0 var(--bosluk-3); }
+    #modal-icerik { padding: var(--bosluk-4); }
+    .modal-bilgi { margin: 0 0 var(--bosluk-3); padding: var(--bosluk-2) var(--bosluk-3); background: var(--renk-zemin); border-radius: var(--yaricap-kucuk); }
+    .alan { margin-bottom: var(--bosluk-3); display: flex; flex-direction: column; gap: var(--bosluk-1); }
+    .alan label { font-weight: 600; font-size: .9rem; }
+    .zorunlu { color: var(--renk-tehlike); margin-left: 2px; }
+    .hata { color: var(--renk-tehlike); font-size: .85rem; }
+    .hata:empty { display: none; }
+    .dugmeler { display: flex; justify-content: flex-end; gap: var(--bosluk-2); margin-top: var(--bosluk-4); }
+    table.gecmis { font-size: .9rem; }
+    table.gecmis th { position: static; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
     @media (max-width: 600px) {
+      .kap { padding: var(--bosluk-3); }
+      header .kap { flex-direction: column; align-items: stretch; }
+      .ust-dugmeler .dugme { flex: 1; }
       .kartlar { grid-template-columns: 1fr 1fr; }
+      .kart strong { font-size: 1.2rem; }
+      .arac { flex-direction: column; align-items: stretch; }
+      .arac input[type=search] { min-width: 0; }
+      .dugme, input, select { min-height: 44px; }
+      .dugme-kucuk { min-height: 44px; flex: 1; }
+      dialog { width: 100vw; max-width: 100vw; }
+      .tablo-kap { background: none; border: 0; box-shadow: none; }
       table.urunler thead { display: none; }
       table.urunler, table.urunler tbody, table.urunler tr, table.urunler td { display: block; width: auto; }
-      table.urunler tr { border: 1px solid #d0d7de; border-radius: .5rem; margin-bottom: .75rem; padding: .25rem; }
-      table.urunler td { border: 0; display: flex; justify-content: space-between; gap: 1rem; }
-      table.urunler td[data-label]::before { content: attr(data-label); font-weight: 600; color: #656d76; }
+      table.urunler tr { background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); box-shadow: var(--golge-kucuk); margin-bottom: var(--bosluk-3); padding: var(--bosluk-1) var(--bosluk-3); }
+      table.urunler tr.kritik { background: var(--renk-tehlike-acik); border-color: var(--renk-tehlike-kenar); }
+      table.urunler td { border: 0; display: flex; justify-content: space-between; gap: var(--bosluk-4); padding: var(--bosluk-1) 0; text-align: right; }
+      table.urunler td[data-label]::before { content: attr(data-label); font-weight: 600; color: var(--renk-soluk); text-align: left; }
+      table.urunler td.islemler { display: flex; padding: var(--bosluk-2) 0; }
     }
   </style>
 </head>
 <body>
-  <h1>Stok takip</h1>
-  <div id="uyari" role="alert" hidden></div>
-  <section class="kartlar">
-    <div class="kart"><span>Toplam ürün</span><strong id="ozet-urun">0</strong></div>
-    <div class="kart"><span>Toplam stok değeri</span><strong id="ozet-deger">0,00 ₺</strong></div>
-    <div class="kart"><span>Kritik stoktaki ürün</span><strong id="ozet-kritik">0</strong></div>
-    <div class="kart"><span>Bugünkü hareket</span><strong id="ozet-hareket">0</strong></div>
-  </section>
-  <div class="arac">
-    <input type="search" id="arama" placeholder="Ad ya da SKU ara" aria-label="Ara" autocomplete="off">
-    <select id="kategori" aria-label="Kategori"></select>
-    <label><input type="checkbox" id="sadece-kritik"> Yalnız kritik stok</label>
-    <button type="button" id="yeni-urun">Yeni ürün</button>
-    <button type="button" id="csv-indir">CSV indir</button>
-  </div>
-  <table class="urunler">
-    <thead><tr id="tablo-baslik"></tr></thead>
-    <tbody id="tablo-govde"></tbody>
-  </table>
-  <p id="bos">Gösterilecek ürün yok.</p>
-  <button type="button" id="ornek-veri" hidden>Örnek verilerle başla</button>
-  <dialog id="modal">
-    <h2 id="modal-baslik"></h2>
+  <header>
+    <div class="kap">
+      <h1>Stok takip</h1>
+      <div class="ust-dugmeler">
+        <button type="button" class="dugme dugme-birincil" id="yeni-urun">Yeni ürün</button>
+        <button type="button" class="dugme dugme-ikincil" id="csv-indir">CSV indir</button>
+      </div>
+    </div>
+  </header>
+  <main class="kap">
+    <div id="uyari" role="alert" hidden></div>
+    <section class="kartlar" aria-label="Özet">
+      <div class="kart"><h2>Toplam ürün</h2><strong id="ozet-urun">0</strong></div>
+      <div class="kart"><h2>Toplam stok değeri</h2><strong id="ozet-deger">0,00 ₺</strong></div>
+      <div class="kart" id="kart-kritik"><h2>Kritik stoktaki ürün</h2><strong id="ozet-kritik">0</strong></div>
+      <div class="kart"><h2>Bugünkü hareket</h2><strong id="ozet-hareket">0</strong></div>
+    </section>
+    <div class="arac" role="search">
+      <input type="search" id="arama" placeholder="Ad ya da SKU ara" aria-label="Ara" autocomplete="off">
+      <select id="kategori" aria-label="Kategori"></select>
+      <label class="onay"><input type="checkbox" id="sadece-kritik"> Yalnız kritik stok</label>
+    </div>
+    <div class="tablo-kap">
+      <table class="urunler">
+        <thead><tr id="tablo-baslik"></tr></thead>
+        <tbody id="tablo-govde"></tbody>
+      </table>
+      <div id="bos" class="bos-durum" hidden>
+        <h2 id="bos-baslik"></h2>
+        <p id="bos-metin"></p>
+        <button type="button" class="dugme dugme-birincil" id="ornek-veri" hidden>Örnek verilerle başla</button>
+      </div>
+    </div>
+  </main>
+  <div id="bildirim" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="modal" aria-labelledby="modal-baslik">
+    <div class="modal-ust">
+      <h2 id="modal-baslik"></h2>
+      <button type="button" class="dugme dugme-ikincil modal-kapat" id="modal-kapat" aria-label="Kapat">×</button>
+    </div>
     <div id="modal-icerik"></div>
   </dialog>
   <script type="module" src="src/app.js"></script>
