@@ -118,6 +118,20 @@ export function hareketleriSuz(urunler, hareketler, { urunId = '', tur = '' } = 
     .map((h) => ({ ...h, urunAd: urunAdiBul(urunler, h.urunId) }));
 }
 
+// Onay yoksa mevcut veri aynen döner; onayla yeni veri döner. Girdiyi değiştirmez.
+export function onayliDegistir(mevcut, yeni, onaylandi) {
+  return onaylandi === true ? yeni : mevcut;
+}
+
+export const veriVarMi = (urunler, hareketler) => urunler.length > 0 || hareketler.length > 0;
+
+// Hareket listesi boş durum metni; liste doluysa ''.
+export function hareketBosMetni(toplamHareket, gorunenSayisi) {
+  if (toplamHareket === 0) return 'Henüz stok hareketi yok.';
+  if (gorunenSayisi === 0) return 'Seçilen süzgeçe uygun hareket yok. Süzgeçleri değiştirmeyi deneyin.';
+  return '';
+}
+
 export function stokDegeri(urunler) {
   let alis = 0;
   let satis = 0;

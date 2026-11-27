@@ -3,7 +3,7 @@ import {
   urunEkle, urunGuncelle, hareketEkle, kritikStoklar, kritikMi, stokDegeri, urunleriSuz,
   hareketGecmisi, csvOlustur, paraBicimle, csvDosyaAdi, ayniGunMu, veriGecerliMi, BIRIMLER,
   tarihBicimle, turEtiketi, TURLER, modulCozumle, ozetHesapla, hareketleriSuz, urunAdiBul,
-  kritikRozetSayisi,
+  kritikRozetSayisi, onayliDegistir, veriVarMi, hareketBosMetni,
 } from './stok.js';
 import { ornekVeri } from './ornek.js';
 
@@ -144,7 +144,10 @@ function hareketSuzgecCiz() {
   turEl.value = seciliTur;
   const liste = hareketleriSuz(urunler, hareketler, { urunId: urunEl.value, tur: turEl.value });
   document.getElementById('hareket-govde').replaceChildren(...liste.map(hareketSatiri));
+  const bosMetin = hareketBosMetni(hareketler.length, liste.length);
+  document.getElementById('hareket-bos-metin').textContent = bosMetin;
   document.getElementById('hareket-bos').hidden = liste.length > 0;
+  document.getElementById('hareket-tablo').hidden = liste.length === 0;
 }
 
 function kritikModuluCiz() {
@@ -162,6 +165,7 @@ function kritikModuluCiz() {
   });
   document.getElementById('kritik-govde').replaceChildren(...satirlar);
   document.getElementById('kritik-bos').hidden = liste.length > 0;
+  document.getElementById('kritik-tablo').hidden = liste.length === 0;
 }
 
 // ---- Gezinme ----
@@ -523,23 +527,38 @@ document.getElementById('modal-kapat').addEventListener('click', pencereKapat);
 // Dışarı (arka plana) tıklayınca da kapat.
 modalEl.addEventListener('click', (olay) => { if (olay.target === modalEl) pencereKapat(); });
 
-function ornekYukle() {
-  const veri = ornekVeri();
-  urunler = veri.urunler;
-  hareketler = veri.hareketler;
+function ornekUygula(onaylandi) {
+  const sonuc = onayliDegistir({ urunler, hareketler }, ornekVeri(), onaylandi);
+  urunler = sonuc.urunler;
+  hareketler = sonuc.hareketler;
   uyar('');
   kaydet();
   ciz();
   bildirimGoster('Örnek veriler yüklendi.');
 }
+function ornekYukle() {
+  // Dolu veri varsa onaysız üzerine yazılmaz.
+  if (!veriVarMi(urunler, hareketler)) { ornekUygula(true); return; }
+  silOnayiconfirm(
+    () => ornekUygula(true),
+    'Örnek verileri yükle',
+    'Mevcut ürünler ve stok hareketleri örnek veriyle değiştirilecek. Bu işlem geri alınamaz. Devam edilsin mi?',
+    'Evet, yükle',
+  );
+}
 document.getElementById('ornek-veri').addEventListener('click', ornekYukle);
 document.getElementById('ayar-ornek').addEventListener('click', ornekYukle);
 
 // Sayfa içi onay penceresi (tarayıcının yerleşik onay kutusu kullanılmaz).
-function silOnayiconfirm(onaylaninca) {
-  pencereAc('Bütün veriyi sil');
-  modalIcerikEl.append(yaz('p', 'Bütün ürünler ve stok hareketleri silinecek. Bu işlem geri alınamaz. Devam edilsin mi?'));
-  const sil = yaz('button', 'Evet, sil', 'dugme dugme-tehlike');
+function silOnayiconfirm(
+  onaylaninca,
+  baslik = 'Bütün veriyi sil',
+  metin = 'Bütün ürünler ve stok hareketleri silinecek. Bu işlem geri alınamaz. Devam edilsin mi?',
+  etiket = 'Evet, sil',
+) {
+  pencereAc(baslik);
+  modalIcerikEl.append(yaz('p', metin));
+  const sil = yaz('button', etiket, 'dugme dugme-tehlike');
   sil.type = 'button';
   const vazgec = yaz('button', 'Vazgeç', 'dugme dugme-ikincil');
   vazgec.type = 'button';

@@ -146,6 +146,7 @@
       header.kenar { transform: translateX(-100%); visibility: hidden; transition: transform .2s, visibility .2s; box-shadow: var(--golge-buyuk); }
       body.menu-acik header.kenar { transform: none; visibility: visible; }
       main.kap { padding-top: 3.5rem; }
+      header.kenar h1 { padding-top: 3.5rem; }
       .kap { padding: var(--bosluk-3); }
       .ust-dugmeler .dugme { flex: 1; }
       .kartlar { grid-template-columns: 1fr 1fr; }
@@ -235,22 +236,22 @@
         <select id="hareket-tur" aria-label="Hareket türüne göre süz"></select>
       </div>
       <div class="tablo-kap">
-        <table class="liste">
+        <table class="liste" id="hareket-tablo">
           <thead><tr><th scope="col">Tarih</th><th scope="col">Ürün</th><th scope="col">Tür</th><th scope="col">Miktar</th><th scope="col">Açıklama</th></tr></thead>
           <tbody id="hareket-govde"></tbody>
         </table>
-        <div id="hareket-bos" class="bos-durum" hidden><p>Gösterilecek hareket yok.</p></div>
+        <div id="hareket-bos" class="bos-durum" hidden><p id="hareket-bos-metin">Henüz stok hareketi yok.</p></div>
       </div>
     </section>
 
     <section class="modul" id="modul-kritik" data-modul="kritik" aria-labelledby="baslik-kritik" hidden>
       <div class="modul-ust"><h2 id="baslik-kritik" tabindex="-1">Kritik stok</h2></div>
       <div class="tablo-kap">
-        <table class="liste">
+        <table class="liste" id="kritik-tablo">
           <thead><tr><th scope="col">Ad</th><th scope="col">SKU</th><th scope="col">Stok</th><th scope="col">Min. stok</th><th scope="col">İşlemler</th></tr></thead>
           <tbody id="kritik-govde"></tbody>
         </table>
-        <div id="kritik-bos" class="bos-durum" hidden><p>Kritik seviyede ürün yok.</p></div>
+        <div id="kritik-bos" class="bos-durum" hidden><p>Kritik stokta ürün yok</p></div>
       </div>
     </section>
 
@@ -258,7 +259,7 @@
       <div class="modul-ust"><h2 id="baslik-ayarlar" tabindex="-1">Ayarlar</h2></div>
       <div class="ayar-kart">
         <h3>Örnek veri</h3>
-        <p>Örnek ürün ve hareketleri yükler; mevcut veri örnek veriyle değişir.</p>
+        <p>Örnek ürün ve hareketleri yükler; mevcut veri varsa değiştirmeden önce onay istenir.</p>
         <button type="button" class="dugme dugme-ikincil" id="ayar-ornek">Örnek verileri yükle</button>
       </div>
       <div class="ayar-kart">
