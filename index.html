@@ -66,7 +66,8 @@
 
     .kartlar { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--bosluk-3); }
     .kart { background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); box-shadow: var(--golge-kucuk); padding: var(--bosluk-3) var(--bosluk-4); }
-    .kart h2 { font-size: .8rem; font-weight: 600; color: var(--renk-soluk); text-transform: uppercase; letter-spacing: .03em; }
+    h3 { font-size: 1rem; margin: 0; }
+    .kart h3, .kart h2 { font-size: .8rem; font-weight: 600; color: var(--renk-soluk); text-transform: uppercase; letter-spacing: .03em; }
     .kart strong { display: block; font-size: 1.6rem; margin-top: var(--bosluk-1); font-variant-numeric: tabular-nums; }
     .kart.vurgu { background: var(--renk-tehlike-acik); border-color: var(--renk-tehlike-kenar); }
     .kart.vurgu strong { color: var(--renk-tehlike); }
@@ -116,13 +117,36 @@
     table.gecmis { font-size: .9rem; }
     table.gecmis th { position: static; }
 
+    body { padding-left: 15rem; }
+    header.kenar { position: fixed; top: 0; left: 0; bottom: 0; width: 15rem; z-index: 50; overflow-y: auto; border-bottom: 0; border-right: 1px solid var(--renk-kenar); display: flex; flex-direction: column; }
+    header.kenar h1 { padding: var(--bosluk-4); border-bottom: 1px solid var(--renk-kenar); }
+    .kartlar { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)) !important; }
+    header.kenar ul { list-style: none; margin: 0; padding: var(--bosluk-2); display: flex; flex-direction: column; gap: var(--bosluk-1); }
+    .kenar-baglanti { display: flex; align-items: center; justify-content: space-between; gap: var(--bosluk-2); min-height: 2.5rem; padding: var(--bosluk-2) var(--bosluk-3); border-left: 4px solid transparent; border-radius: var(--yaricap-kucuk); color: var(--renk-metin); text-decoration: none; }
+    .kenar-baglanti:hover { background: var(--renk-zemin); }
+    .kenar-baglanti[aria-current="page"] { background: var(--renk-birincil-acik); color: var(--renk-birincil-koyu); border-left-color: var(--renk-birincil); font-weight: 700; }
+    .kenar-baglanti:focus-visible, .menu-dugme:focus-visible { outline: 3px solid var(--renk-birincil); outline-offset: 2px; }
+    .menu-dugme { display: none; position: fixed; top: var(--bosluk-2); left: var(--bosluk-2); z-index: 60; }
+    .modul-ust { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bosluk-3); }
+    .modul-ust h2 { font-size: 1.3rem; }
+    .modul-ust h2:focus { outline: none; }
+    .modul { display: flex; flex-direction: column; gap: var(--bosluk-4); }
+    .tablo-kap { overflow-x: auto; }
+    table.liste td, table.liste th { white-space: nowrap; }
+    .ayar-kart { background: var(--renk-yuzey); border: 1px solid var(--renk-kenar); border-radius: var(--yaricap-orta); padding: var(--bosluk-4); display: flex; flex-direction: column; gap: var(--bosluk-2); align-items: flex-start; }
+    .ayar-kart p { margin: 0; color: var(--renk-soluk); }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
 
     @media (max-width: 600px) {
+      body { padding-left: 0; }
+      .menu-dugme { display: inline-block; }
+      header.kenar { transform: translateX(-100%); visibility: hidden; transition: transform .2s, visibility .2s; box-shadow: var(--golge-buyuk); }
+      body.menu-acik header.kenar { transform: none; visibility: visible; }
+      main.kap { padding-top: 3.5rem; }
       .kap { padding: var(--bosluk-3); }
-      header .kap { flex-direction: column; align-items: stretch; }
       .ust-dugmeler .dugme { flex: 1; }
       .kartlar { grid-template-columns: 1fr 1fr; }
       .kart strong { font-size: 1.2rem; }
@@ -143,23 +167,49 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="kap">
+  <button type="button" class="dugme dugme-ikincil menu-dugme" id="menu-dugme" aria-label="Menüyü aç/kapat" aria-expanded="false" aria-controls="kenar">☰</button>
+  <header class="kenar" id="kenar">
+    <nav aria-label="Modüller" id="kenar-nav">
       <h1>Stok takip</h1>
+      <ul>
+        <li><a class="kenar-baglanti" href="#/ozet" data-modul="ozet">Özet</a></li>
+        <li><a class="kenar-baglanti" href="#/urunler" data-modul="urunler">Ürünler</a></li>
+        <li><a class="kenar-baglanti" href="#/hareketler" data-modul="hareketler">Stok hareketleri</a></li>
+        <li><a class="kenar-baglanti" href="#/kritik" data-modul="kritik">Kritik stok <span class="rozet" id="rozet-kritik" hidden></span></a></li>
+        <li><a class="kenar-baglanti" href="#/ayarlar" data-modul="ayarlar">Ayarlar</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="kap">
+    <div id="uyari" role="alert" hidden></div>
+
+    <section class="modul" id="modul-ozet" data-modul="ozet" aria-labelledby="baslik-ozet">
+      <div class="modul-ust"><h2 id="baslik-ozet" tabindex="-1">Özet</h2></div>
+      <div class="kartlar">
+        <div class="kart"><h3>Toplam ürün</h3><strong id="ozet-urun">0</strong></div>
+        <div class="kart"><h3>Toplam stok adedi</h3><strong id="ozet-stok">0</strong></div>
+        <div class="kart"><h3>Toplam stok değeri</h3><strong id="ozet-deger">0,00 ₺</strong></div>
+        <div class="kart" id="kart-kritik"><h3>Kritik stoktaki ürün</h3><strong id="ozet-kritik">0</strong></div>
+        <div class="kart"><h3>Bugünkü hareket</h3><strong id="ozet-hareket">0</strong></div>
+      </div>
+      <h3>Son stok hareketleri</h3>
+      <div class="tablo-kap">
+        <table class="liste">
+          <thead><tr><th scope="col">Tarih</th><th scope="col">Ürün</th><th scope="col">Tür</th><th scope="col">Miktar</th><th scope="col">Açıklama</th></tr></thead>
+          <tbody id="ozet-son-hareketler"></tbody>
+        </table>
+        <div id="ozet-bos" class="bos-durum" hidden><p>Henüz stok hareketi yok.</p></div>
+      </div>
+    </section>
+
+    <section class="modul" id="modul-urunler" data-modul="urunler" aria-labelledby="baslik-urunler" hidden>
+    <div class="modul-ust">
+      <h2 id="baslik-urunler" tabindex="-1">Ürünler</h2>
       <div class="ust-dugmeler">
         <button type="button" class="dugme dugme-birincil" id="yeni-urun">Yeni ürün</button>
         <button type="button" class="dugme dugme-ikincil" id="csv-indir">CSV indir</button>
       </div>
     </div>
-  </header>
-  <main class="kap">
-    <div id="uyari" role="alert" hidden></div>
-    <section class="kartlar" aria-label="Özet">
-      <div class="kart"><h2>Toplam ürün</h2><strong id="ozet-urun">0</strong></div>
-      <div class="kart"><h2>Toplam stok değeri</h2><strong id="ozet-deger">0,00 ₺</strong></div>
-      <div class="kart" id="kart-kritik"><h2>Kritik stoktaki ürün</h2><strong id="ozet-kritik">0</strong></div>
-      <div class="kart"><h2>Bugünkü hareket</h2><strong id="ozet-hareket">0</strong></div>
-    </section>
     <div class="arac" role="search">
       <input type="search" id="arama" placeholder="Ad ya da SKU ara" aria-label="Ara" autocomplete="off">
       <select id="kategori" aria-label="Kategori"></select>
@@ -176,6 +226,47 @@
         <button type="button" class="dugme dugme-birincil" id="ornek-veri" hidden>Örnek verilerle başla</button>
       </div>
     </div>
+    </section>
+
+    <section class="modul" id="modul-hareketler" data-modul="hareketler" aria-labelledby="baslik-hareketler" hidden>
+      <div class="modul-ust"><h2 id="baslik-hareketler" tabindex="-1">Stok hareketleri</h2></div>
+      <div class="arac">
+        <select id="hareket-urun" aria-label="Ürüne göre süz"></select>
+        <select id="hareket-tur" aria-label="Hareket türüne göre süz"></select>
+      </div>
+      <div class="tablo-kap">
+        <table class="liste">
+          <thead><tr><th scope="col">Tarih</th><th scope="col">Ürün</th><th scope="col">Tür</th><th scope="col">Miktar</th><th scope="col">Açıklama</th></tr></thead>
+          <tbody id="hareket-govde"></tbody>
+        </table>
+        <div id="hareket-bos" class="bos-durum" hidden><p>Gösterilecek hareket yok.</p></div>
+      </div>
+    </section>
+
+    <section class="modul" id="modul-kritik" data-modul="kritik" aria-labelledby="baslik-kritik" hidden>
+      <div class="modul-ust"><h2 id="baslik-kritik" tabindex="-1">Kritik stok</h2></div>
+      <div class="tablo-kap">
+        <table class="liste">
+          <thead><tr><th scope="col">Ad</th><th scope="col">SKU</th><th scope="col">Stok</th><th scope="col">Min. stok</th><th scope="col">İşlemler</th></tr></thead>
+          <tbody id="kritik-govde"></tbody>
+        </table>
+        <div id="kritik-bos" class="bos-durum" hidden><p>Kritik seviyede ürün yok.</p></div>
+      </div>
+    </section>
+
+    <section class="modul" id="modul-ayarlar" data-modul="ayarlar" aria-labelledby="baslik-ayarlar" hidden>
+      <div class="modul-ust"><h2 id="baslik-ayarlar" tabindex="-1">Ayarlar</h2></div>
+      <div class="ayar-kart">
+        <h3>Örnek veri</h3>
+        <p>Örnek ürün ve hareketleri yükler; mevcut veri örnek veriyle değişir.</p>
+        <button type="button" class="dugme dugme-ikincil" id="ayar-ornek">Örnek verileri yükle</button>
+      </div>
+      <div class="ayar-kart">
+        <h3>Bütün veriyi sil</h3>
+        <p>Bütün ürünleri ve stok hareketlerini siler. Bu işlem geri alınamaz.</p>
+        <button type="button" class="dugme dugme-tehlike" id="ayar-sil">Bütün veriyi sil</button>
+      </div>
+    </section>
   </main>
   <div id="bildirim" class="toast" role="status" aria-live="polite" hidden></div>
   <dialog id="modal" aria-labelledby="modal-baslik">
