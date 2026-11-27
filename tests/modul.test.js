@@ -185,6 +185,83 @@ test('sayfa: Ayarlar silmeden önce confirm ister; örnek yükle ve sil düğmel
   assert.match(k, /confirm\(/);
 });
 
+const govde = (k, baslangic) => {
+  const i = k.indexOf(baslangic);
+  assert.ok(i >= 0, `${baslangic} bulunamadı`);
+  return k.slice(i);
+};
+
+test('ayarlar: veri silme yalnız onay düğmesinin tıklama işleyicisinden sonra çalışır, vazgeç silmez', () => {
+  const k = oku('src/app.js');
+  const onay = k.slice(k.indexOf('function silOnayiconfirm'), k.indexOf("document.getElementById('ayar-sil')"));
+  assert.match(onay, /vazgec\.addEventListener\('click', pencereKapat\)/);
+  assert.match(onay, /sil\.addEventListener\('click', \(\) => \{[^}]*onaylaninca\(\)/);
+  const sil = govde(k, "document.getElementById('ayar-sil')").split("document.getElementById('hareket-urun')")[0];
+  assert.match(sil, /silOnayiconfirm\(\(\) => \{[\s\S]*urunler = \[\][\s\S]*hareketler = \[\]/);
+  const disari = sil.replace(/silOnayiconfirm\(\(\) => \{[\s\S]*\}\);\s*\}\);/, '');
+  assert.doesNotMatch(disari, /urunler = \[\]/);
+});
+
+test('rozet: kritikRozetSayisi 0, 1 ve çok ürün için doğru sayar; eşitlik dahil, girdi değişmez', () => {
+  const { kritikRozetSayisi } = stok;
+  assert.equal(kritikRozetSayisi([]), 0);
+  assert.equal(kritikRozetSayisi(dondur([urun({ stok: 6, minStok: 5 })])), 0);
+  assert.equal(kritikRozetSayisi(dondur([urun({ stok: 5, minStok: 5 })])), 1);
+  const cok = Array.from({ length: 12 }, (_, i) => urun({ id: i + 1, stok: i, minStok: 5 }));
+  assert.equal(kritikRozetSayisi(dondur(cok)), 6);
+});
+
+test('rozet: app.js sayıyı yazar, 0 iken gizler, aria-label e sayıyı ekler ve her ciz() te güncellenir', () => {
+  const k = oku('src/app.js');
+  const r = k.slice(k.indexOf('function rozetCiz'), k.indexOf('const TUR_SECENEKLERI'));
+  assert.match(r, /rozet\.textContent = String\(n\)/);
+  assert.match(r, /rozet\.hidden = n === 0/);
+  assert.match(r, /setAttribute\('aria-label'[^\n]*\$\{n\}/);
+  const c = k.slice(k.indexOf('function ciz()'), k.indexOf('// ---- Pencereler'));
+  assert.match(c, /rozetCiz\(\)/);
+});
+
+test('kritik modül: stok === minStok listelenir, üstü listelenmez, girişten sonra üründen çıkar', () => {
+  const { kritikStoklar, hareketEkle } = stok;
+  const urunler = dondur([
+    urun({ id: 1, stok: 5, minStok: 5 }),
+    urun({ id: 2, stok: 6, minStok: 5 }),
+    urun({ id: 3, stok: 0, minStok: 5 }),
+  ]);
+  assert.deepEqual(kritikStoklar(urunler).map((u) => u.id), [1, 3]);
+  assert.deepEqual(kritikStoklar([]), []);
+  const sonuc = hareketEkle(urunler, [], { urunId: 1, tur: 'giris', miktar: 1, aciklama: '', tarih: 1 });
+  const yeniUrunler = Array.isArray(sonuc) ? sonuc[0] : sonuc.urunler;
+  assert.deepEqual(kritikStoklar(yeniUrunler).map((u) => u.id), [3]);
+});
+
+test('kritik modül: app.js kritikStoklar kullanır, satırdan yalnız giriş açar, boş durumu gizler', () => {
+  const k = oku('src/app.js');
+  const m = k.slice(k.indexOf('function kritikModuluCiz'), k.indexOf('// ---- Gezinme'));
+  assert.match(m, /kritikStoklar\(urunler\)/);
+  assert.match(m, /hareketPenceresi\(u\.id, 'giris'\)/);
+  assert.doesNotMatch(m, /'cikis'|urunPenceresi|gecmisPenceresi/);
+  assert.match(m, /kritik-bos'\)\.hidden = liste\.length > 0/);
+});
+
+test('menü: modül gösterilince ve bağlantıya tıklanınca kapanır; düğme durumu tersine çevirir; aria-expanded güncellenir', () => {
+  const k = oku('src/app.js');
+  const g = k.slice(k.indexOf('function modulGoster'), k.indexOf('function menuAyarla'));
+  assert.match(g, /menuAyarla\(false\)/);
+  const m = k.slice(k.indexOf('function menuAyarla'), k.indexOf('function kategorileriCiz'));
+  assert.match(m, /classList\.toggle\('menu-acik', acik\)/);
+  assert.match(m, /setAttribute\('aria-expanded', String\(acik\)\)/);
+  assert.match(k, /menu-dugme'\)\.addEventListener\('click', \(\) => \{\s*menuAyarla\(!document\.body\.classList\.contains\('menu-acik'\)\)/);
+  assert.match(k, /closest\('a'\)\) menuAyarla\(false\)/);
+});
+
+test('menü: HTML te düğme aria-expanded="false" ve aria-controls ile kapalı başlar', () => {
+  const d = html.match(/<button[^>]*id=["']menu-dugme["'][^>]*>/);
+  assert.ok(d, 'menu-dugme yok');
+  assert.match(d[0], /aria-expanded=["']false["']/);
+  assert.match(d[0], /aria-controls=/);
+});
+
 test('sayfa: hareketler ve kritik modülleri için kimlikler tanımlıdır', () => {
   for (const id of ['hareket-urun', 'hareket-tur', 'hareket-govde', 'hareket-bos', 'kritik-govde', 'kritik-bos', 'ozet-son-hareketler']) {
     assert.match(html, new RegExp(`id=["']${id}["']`), id);
