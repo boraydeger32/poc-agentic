@@ -76,6 +76,62 @@ export function hareketEkle(urunler, hareketler, hareket) {
 export const kritikMi = (u) => u.stok <= u.minStok;
 export const kritikStoklar = (urunler) => urunler.filter(kritikMi);
 
+export const MODULLER = [
+  { anahtar: 'ozet', yol: '#/ozet', ad: 'Özet' },
+  { anahtar: 'urunler', yol: '#/urunler', ad: 'Ürünler' },
+  { anahtar: 'hareketler', yol: '#/hareketler', ad: 'Stok hareketleri' },
+  { anahtar: 'kritik', yol: '#/kritik', ad: 'Kritik stok' },
+  { anahtar: 'ayarlar', yol: '#/ayarlar', ad: 'Ayarlar' },
+];
+
+export function modulCozumle(hash) {
+  const m = typeof hash === 'string' ? MODULLER.find((x) => x.yol === hash) : undefined;
+  return m ? m.anahtar : MODULLER[0].anahtar;
+}
+
+export const kritikSayisi = (urunler) => kritikStoklar(urunler).length;
+export const kritikRozetSayisi = kritikSayisi;
+
+export function urunAdiBul(urunler, urunId) {
+  const u = urunler.find((x) => String(x.id) === String(urunId));
+  return u ? u.ad : '(silinmiş ürün)';
+}
+
+const yeniUstte = (a, b) => b.tarih - a.tarih || b.id - a.id;
+
+export function ozetHesapla(urunler, hareketler) {
+  const toplamStok = urunler.reduce((t, u) => t + (typeof u.stok === 'number' && Number.isFinite(u.stok) ? u.stok : 0), 0);
+  return {
+    urunSayisi: urunler.length,
+    toplamStok,
+    stokAdedi: toplamStok,
+    kritikSayisi: kritikSayisi(urunler),
+    sonHareketler: hareketler.slice().sort(yeniUstte).slice(0, 5),
+  };
+}
+
+export function hareketleriSuz(urunler, hareketler, { urunId = '', tur = '' } = {}) {
+  const uid = urunId === null || urunId === undefined ? '' : String(urunId);
+  return hareketler
+    .filter((h) => (uid === '' || String(h.urunId) === uid) && (!tur || h.tur === tur))
+    .sort(yeniUstte)
+    .map((h) => ({ ...h, urunAd: urunAdiBul(urunler, h.urunId) }));
+}
+
+// Onay yoksa mevcut veri aynen döner; onayla yeni veri döner. Girdiyi değiştirmez.
+export function onayliDegistir(mevcut, yeni, onaylandi) {
+  return onaylandi === true ? yeni : mevcut;
+}
+
+export const veriVarMi = (urunler, hareketler) => urunler.length > 0 || hareketler.length > 0;
+
+// Hareket listesi boş durum metni; liste doluysa ''.
+export function hareketBosMetni(toplamHareket, gorunenSayisi) {
+  if (toplamHareket === 0) return 'Henüz stok hareketi yok.';
+  if (gorunenSayisi === 0) return 'Seçilen süzgeçe uygun hareket yok. Süzgeçleri değiştirmeyi deneyin.';
+  return '';
+}
+
 export function stokDegeri(urunler) {
   let alis = 0;
   let satis = 0;

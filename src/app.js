@@ -2,7 +2,8 @@
 import {
   urunEkle, urunGuncelle, hareketEkle, kritikStoklar, kritikMi, stokDegeri, urunleriSuz,
   hareketGecmisi, csvOlustur, paraBicimle, csvDosyaAdi, ayniGunMu, veriGecerliMi, BIRIMLER,
-  tarihBicimle, turEtiketi,
+  tarihBicimle, turEtiketi, TURLER, modulCozumle, ozetHesapla, hareketleriSuz, urunAdiBul,
+  kritikRozetSayisi, onayliDegistir, veriVarMi, hareketBosMetni,
 } from './stok.js';
 import { ornekVeri } from './ornek.js';
 
@@ -83,14 +84,110 @@ function yukle() {
 }
 
 // ---- Çizim ----
+function hareketSatiri(h) {
+  const tr = yaz('tr');
+  tr.append(
+    yaz('td', tarihBicimle(h.tarih)),
+    yaz('td', h.urunAd),
+    yaz('td', turEtiketi(h.tur)),
+    yaz('td', String(h.miktar)),
+    yaz('td', h.aciklama),
+  );
+  return tr;
+}
+
 function kartlariCiz() {
-  const simdi = Date.now();
-  document.getElementById('ozet-urun').textContent = String(urunler.length);
+  const o = ozetHesapla(urunler, hareketler);
+  document.getElementById('ozet-urun').textContent = String(o.urunSayisi);
+  document.getElementById('ozet-stok').textContent = String(o.toplamStok);
+  document.getElementById('ozet-kritik').textContent = String(o.kritikSayisi);
+  document.getElementById('kart-kritik').classList.toggle('vurgu', o.kritikSayisi > 0);
+  const son = o.sonHareketler.map((h) => ({ ...h, urunAd: urunAdiBul(urunler, h.urunId) }));
   document.getElementById('ozet-deger').textContent = paraBicimle(stokDegeri(urunler).alis);
-  const kritikSayi = kritikStoklar(urunler).length;
-  document.getElementById('ozet-kritik').textContent = String(kritikSayi);
-  document.getElementById('kart-kritik').classList.toggle('vurgu', kritikSayi > 0);
-  document.getElementById('ozet-hareket').textContent = String(hareketler.filter((h) => ayniGunMu(h.tarih, simdi)).length);
+  document.getElementById('ozet-hareket').textContent = String(hareketler.filter((h) => ayniGunMu(h.tarih, Date.now())).length);
+  document.getElementById('ozet-son-hareketler').replaceChildren(...son.map(hareketSatiri));
+  document.getElementById('ozet-bos').hidden = son.length > 0;
+}
+
+function rozetCiz() {
+  const n = kritikRozetSayisi(urunler);
+  const rozet = document.getElementById('rozet-kritik');
+  rozet.textContent = String(n);
+  rozet.hidden = n === 0;
+  const baglanti = document.querySelector('.kenar-baglanti[data-modul="kritik"]');
+  baglanti.setAttribute('aria-label', n > 0 ? `Kritik stok, ${n} kritik ürün` : 'Kritik stok');
+}
+
+const TUR_SECENEKLERI = [['', 'Tüm türler'], ...TURLER.map((t) => [t, turEtiketi(t)])];
+function hareketSuzgecCiz() {
+  const urunEl = document.getElementById('hareket-urun');
+  const turEl = document.getElementById('hareket-tur');
+  const seciliUrun = urunEl.value;
+  const seciliTur = turEl.value;
+  urunEl.replaceChildren();
+  const hepsi = yaz('option', 'Tüm ürünler');
+  hepsi.value = '';
+  urunEl.append(hepsi);
+  for (const u of urunler) {
+    const o = yaz('option', u.ad);
+    o.value = String(u.id);
+    urunEl.append(o);
+  }
+  urunEl.value = urunler.some((u) => String(u.id) === seciliUrun) ? seciliUrun : '';
+  if (turEl.options.length === 0) {
+    for (const [d, e] of TUR_SECENEKLERI) {
+      const o = yaz('option', e);
+      o.value = d;
+      turEl.append(o);
+    }
+  }
+  turEl.value = seciliTur;
+  const liste = hareketleriSuz(urunler, hareketler, { urunId: urunEl.value, tur: turEl.value });
+  document.getElementById('hareket-govde').replaceChildren(...liste.map(hareketSatiri));
+  const bosMetin = hareketBosMetni(hareketler.length, liste.length);
+  document.getElementById('hareket-bos-metin').textContent = bosMetin;
+  document.getElementById('hareket-bos').hidden = liste.length > 0;
+  document.getElementById('hareket-tablo').hidden = liste.length === 0;
+}
+
+function kritikModuluCiz() {
+  const liste = kritikStoklar(urunler);
+  const satirlar = liste.map((u) => {
+    const tr = yaz('tr', undefined, 'kritik');
+    const islem = yaz('td', undefined, 'islemler');
+    const b = yaz('button', 'Giriş', 'dugme dugme-kucuk dugme-giris');
+    b.type = 'button';
+    b.setAttribute('aria-label', `${u.ad}: Giriş`);
+    b.addEventListener('click', () => hareketPenceresi(u.id, 'giris'));
+    islem.append(b);
+    tr.append(yaz('td', u.ad), yaz('td', u.sku), yaz('td', `${u.stok} ${u.birim}`), yaz('td', String(u.minStok)), islem);
+    return tr;
+  });
+  document.getElementById('kritik-govde').replaceChildren(...satirlar);
+  document.getElementById('kritik-bos').hidden = liste.length > 0;
+  document.getElementById('kritik-tablo').hidden = liste.length === 0;
+}
+
+// ---- Gezinme ----
+let ilkGosterim = true;
+function modulGoster() {
+  const aktif = modulCozumle(location.hash);
+  for (const s of document.querySelectorAll('section.modul')) s.hidden = s.dataset.modul !== aktif;
+  for (const a of document.querySelectorAll('.kenar-baglanti')) {
+    if (a.dataset.modul === aktif) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+  menuAyarla(false);
+  if (!ilkGosterim) {
+    const baslik = document.getElementById(`baslik-${aktif}`);
+    if (baslik) baslik.focus();
+  }
+  ilkGosterim = false;
+}
+
+function menuAyarla(acik) {
+  document.body.classList.toggle('menu-acik', acik);
+  document.getElementById('menu-dugme').setAttribute('aria-expanded', String(acik));
 }
 
 function kategorileriCiz() {
@@ -183,6 +280,9 @@ function satirCiz(u) {
 
 function ciz() {
   kartlariCiz();
+  rozetCiz();
+  hareketSuzgecCiz();
+  kritikModuluCiz();
   kategorileriCiz();
   basliklariCiz();
   const liste = sirala(urunleriSuz(urunler, {
@@ -427,15 +527,75 @@ document.getElementById('modal-kapat').addEventListener('click', pencereKapat);
 // Dışarı (arka plana) tıklayınca da kapat.
 modalEl.addEventListener('click', (olay) => { if (olay.target === modalEl) pencereKapat(); });
 
-document.getElementById('ornek-veri').addEventListener('click', () => {
-  const veri = ornekVeri();
-  urunler = veri.urunler;
-  hareketler = veri.hareketler;
+function ornekUygula(onaylandi) {
+  const sonuc = onayliDegistir({ urunler, hareketler }, ornekVeri(), onaylandi);
+  urunler = sonuc.urunler;
+  hareketler = sonuc.hareketler;
   uyar('');
   kaydet();
   ciz();
   bildirimGoster('Örnek veriler yüklendi.');
+}
+function ornekYukle() {
+  // Dolu veri varsa onaysız üzerine yazılmaz.
+  if (!veriVarMi(urunler, hareketler)) { ornekUygula(true); return; }
+  silOnayiconfirm(
+    () => ornekUygula(true),
+    'Örnek verileri yükle',
+    'Mevcut ürünler ve stok hareketleri örnek veriyle değiştirilecek. Bu işlem geri alınamaz. Devam edilsin mi?',
+    'Evet, yükle',
+  );
+}
+document.getElementById('ornek-veri').addEventListener('click', ornekYukle);
+document.getElementById('ayar-ornek').addEventListener('click', ornekYukle);
+
+// Sayfa içi onay penceresi (tarayıcının yerleşik onay kutusu kullanılmaz).
+function silOnayiconfirm(
+  onaylaninca,
+  baslik = 'Bütün veriyi sil',
+  metin = 'Bütün ürünler ve stok hareketleri silinecek. Bu işlem geri alınamaz. Devam edilsin mi?',
+  etiket = 'Evet, sil',
+) {
+  pencereAc(baslik);
+  modalIcerikEl.append(yaz('p', metin));
+  const sil = yaz('button', etiket, 'dugme dugme-tehlike');
+  sil.type = 'button';
+  const vazgec = yaz('button', 'Vazgeç', 'dugme dugme-ikincil');
+  vazgec.type = 'button';
+  vazgec.addEventListener('click', pencereKapat);
+  sil.addEventListener('click', () => { pencereKapat(); onaylaninca(); });
+  const alt = yaz('div', undefined, 'dugmeler');
+  alt.append(vazgec, sil);
+  modalIcerikEl.append(alt);
+  vazgec.focus();
+}
+
+document.getElementById('ayar-sil').addEventListener('click', () => {
+  silOnayiconfirm(() => {
+    urunler = [];
+    hareketler = [];
+    kaydet();
+    ciz();
+    bildirimGoster('Bütün veri silindi.');
+  });
 });
+
+document.getElementById('hareket-urun').addEventListener('change', ciz);
+document.getElementById('hareket-tur').addEventListener('change', ciz);
+document.getElementById('menu-dugme').addEventListener('click', () => {
+  menuAyarla(!document.body.classList.contains('menu-acik'));
+});
+document.addEventListener('keydown', (olay) => {
+  if (olay.key === 'Escape' && document.body.classList.contains('menu-acik')) {
+    menuAyarla(false);
+    document.getElementById('menu-dugme').focus();
+  }
+});
+// Aynı modülün bağlantısına tıklanınca hashchange olmaz; menüyü yine kapat.
+document.getElementById('kenar-nav').addEventListener('click', (olay) => {
+  if (olay.target.closest && olay.target.closest('a')) menuAyarla(false);
+});
+window.addEventListener('hashchange', modulGoster);
 
 document.getElementById('csv-indir').addEventListener('click', () => {
   const blob = new Blob(['﻿', csvOlustur(urunler)], { type: 'text/csv;charset=utf-8' });
@@ -452,3 +612,4 @@ document.getElementById('csv-indir').addEventListener('click', () => {
 
 yukle();
 ciz();
+modulGoster();
